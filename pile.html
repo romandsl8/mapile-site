@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Une pile MaPile</title>
+<meta name="description" content="Une pile de livres partagée depuis l'app MaPile.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .books { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:22px; margin:24px 0; }
+  .book img, .book .ph { width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,.18); background:var(--line); }
+  .book .ph { display:flex; align-items:center; justify-content:center; text-align:center; padding:8px; font-family:Georgia,serif; font-size:.85rem; color:#fff; }
+  .book .t { font-weight:600; font-size:.9rem; margin-top:8px; line-height:1.25; }
+  .book .a { color:var(--muted); font-size:.8rem; }
+  .actions { display:flex; gap:12px; flex-wrap:wrap; margin:8px 0 4px; }
+  .btn { display:inline-block; padding:12px 20px; border-radius:999px; background:var(--accent); color:#fff; text-decoration:none; font-weight:600; }
+  .btn.secondary { background:var(--card); color:var(--fg); border:1px solid var(--line); }
+  .emoji { font-size:2.6rem; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="emoji" id="emoji">📚</span>
+    <div><h1 id="name">Une pile de livres</h1><p class="sub" id="count"></p></div>
+  </header>
+
+  <div class="actions">
+    <a class="btn" id="open" href="#">Ouvrir dans MaPile</a>
+    <a class="btn secondary" href="index.html">Découvrir MaPile</a>
+  </div>
+  <p class="sub" style="font-size:.85rem">« Ouvrir dans MaPile » importe cette pile dans l'app (sur iPhone, avec MaPile installée).</p>
+
+  <div class="books" id="books"></div>
+  <p class="sub" id="error" hidden>Ce lien de pile est incomplet ou invalide.</p>
+
+  <footer>Partagé depuis MaPile · Couvertures : Open Library · <a href="confidentialite.html">Confidentialité</a></footer>
+</main>
+<script>
+(function () {
+  function decode(code) {
+    var b64 = code.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var bytes = Uint8Array.from(atob(b64), function (c) { return c.charCodeAt(0); });
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  function hue(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h + s.charCodeAt(i)) % 360; return h; }
+  var hash = location.hash || '';
+  if (hash.indexOf('#p=') !== 0) { document.getElementById('error').hidden = false; return; }
+  var code = hash.slice(3), data;
+  try { data = decode(code); } catch (e) { document.getElementById('error').hidden = false; return; }
+
+  document.title = (data.e || '📚') + ' ' + data.n + ' · MaPile';
+  document.getElementById('emoji').textContent = data.e || '📚';
+  document.getElementById('name').textContent = data.n || 'Une pile de livres';
+  var n = (data.b || []).length;
+  document.getElementById('count').textContent = n + (n > 1 ? ' livres' : ' livre');
+  document.getElementById('open').href = 'mapile://pile#p=' + code;
+
+  var list = document.getElementById('books');
+  (data.b || []).forEach(function (b) {
+    var title = b[0] || '', author = b[1] || '', isbn = b[2] || '';
+    var div = document.createElement('div'); div.className = 'book';
+    var ph = document.createElement('div'); ph.className = 'ph';
+    ph.style.background = 'hsl(' + hue(title) + ',40%,45%)'; ph.textContent = title;
+    if (isbn) {
+      var img = document.createElement('img');
+      img.alt = title; img.loading = 'lazy';
+      img.src = 'https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(isbn) + '-M.jpg?default=false';
+      img.onerror = function () { img.replaceWith(ph); };
+      div.appendChild(img);
+    } else {
+      div.appendChild(ph);
+    }
+    var t = document.createElement('div'); t.className = 't'; t.textContent = title;
+    var a = document.createElement('div'); a.className = 'a'; a.textContent = author;
+    div.appendChild(t); div.appendChild(a);
+    list.appendChild(div);
+  });
+})();
+</script>
+</body>
+</html>
