@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Une pile MaPile</title>
 <meta name="description" content="Une pile de livres partagée depuis l'app MaPile.">
+<!-- Bannière Safari sur iPhone : « Ouvrir » si MaPile est installée, sinon « Obtenir » sur l'App Store. -->
+<meta name="apple-itunes-app" content="app-id=6835579101">
 <link rel="stylesheet" href="style.css">
 <style>
   .books { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:22px; margin:24px 0; }
@@ -27,9 +29,9 @@
 
   <div class="actions">
     <a class="btn" id="open" href="#">Ouvrir dans MaPile</a>
-    <a class="btn secondary" href="index.html">Découvrir MaPile</a>
+    <a class="btn secondary" id="store" href="https://apps.apple.com/app/id6835579101">Télécharger MaPile (gratuit)</a>
   </div>
-  <p class="sub" style="font-size:.85rem">« Ouvrir dans MaPile » importe cette pile dans l'app (sur iPhone, avec MaPile installée).</p>
+  <p class="sub" style="font-size:.85rem">Vous avez MaPile ? « Ouvrir dans MaPile » importe cette pile dans l'app. Sinon, téléchargez-la gratuitement sur l'App Store, puis revenez sur ce lien. <a href="index.html">En savoir plus</a></p>
 
   <div class="books" id="books"></div>
   <p class="sub" id="error" hidden>Ce lien de pile est incomplet ou invalide.</p>
@@ -55,7 +57,17 @@
   document.getElementById('name').textContent = data.n || 'Une pile de livres';
   var n = (data.b || []).length;
   document.getElementById('count').textContent = n + (n > 1 ? ' livres' : ' livre');
-  document.getElementById('open').href = 'mapile://pile#p=' + code;
+  var openLink = document.getElementById('open');
+  openLink.href = 'mapile://pile#p=' + code;
+  // Si MaPile n'est pas installée, l'iPhone reste sur cette page : on propose alors l'App Store.
+  openLink.addEventListener('click', function () {
+    var start = Date.now();
+    setTimeout(function () {
+      if (!document.hidden && Date.now() - start < 2500) {
+        window.location.href = document.getElementById('store').href;
+      }
+    }, 1500);
+  });
 
   var list = document.getElementById('books');
   (data.b || []).forEach(function (b) {
